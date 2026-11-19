@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ironclad Web — Engineered Luxury Websites</title>
+<meta name="description" content="Bespoke luxury websites, immersive 3D experiences and custom full-stack platforms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --void:#060608; --slate:#0D0E12; --plat-1:#F4F4F6; --plat-2:#9CA3AF;
+  --hair:rgba(255,255,255,.08);
+  --glass-bg:rgba(16,17,22,.55); --glass-border:rgba(255,255,255,.09);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:96px;background:var(--void)}
+body{margin:0;background:var(--void);color:var(--plat-1);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* Reusable glass surface */
+.glass{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);
+  border:1px solid var(--glass-border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 24px 60px -20px rgba(0,0,0,.8);
+}
+.plat-text{background:linear-gradient(180deg,#F4F4F6 10%,#9CA3AF 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* Metallic platinum CTA */
+.btn-plat{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;letter-spacing:-.01em;color:#0b0c10;
+  background:linear-gradient(180deg,#FBFBFC 0%,#D9DBE0 48%,#B4B8C0 52%,#E6E8EC 100%);
+  border-radius:999px;border:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.18),0 8px 24px -8px rgba(244,244,246,.25);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;overflow:hidden;text-decoration:none;white-space:nowrap
+}
+.btn-plat::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.7) 50%,transparent 65%);transform:translateX(-120%);transition:transform .7s}
+.btn-plat:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.18),0 12px 32px -8px rgba(244,244,246,.4)}
+.btn-plat:hover::after{transform:translateX(120%)}
+.btn-ghost{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:999px;text-decoration:none;white-space:nowrap;
+  font-family:"Plus Jakarta Sans",sans-serif;font-weight:600;color:var(--plat-1);
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transition:background .3s,border-color .3s,transform .35s
+}
+.btn-ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);transform:translateY(-1px)}
+
+/* Navbar */
+.nav-link{position:relative;font-size:.875rem;color:var(--plat-2);text-decoration:none;padding:.5rem .25rem;transition:color .25s}
+.nav-link::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;background:linear-gradient(90deg,transparent,#F4F4F6,transparent);transform:scaleX(0);transition:transform .35s}
+.nav-link:hover{color:var(--plat-1)}.nav-link:hover::after{transform:scaleX(1)}
+
+/* Hero */
+#hero{position:relative;height:100vh;height:100svh;min-height:640px;background:radial-gradient(1200px 700px at 72% 45%,#12131a 0%,var(--void) 62%)}
+#stage{position:absolute;inset:0;overflow:hidden}
+#stage canvas{display:block;width:100%;height:100%;touch-action:pan-y}
+#hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);
+  background-size:72px 72px;opacity:.35;
+  -webkit-mask-image:radial-gradient(ellipse at 70% 50%,#000 0%,transparent 70%);mask-image:radial-gradient(ellipse at 70% 50%,#000 0%,transparent 70%)}
+@media (max-width:767px){#hero{height:max(100svh,900px)}}
+.fallback-orb{display:none;position:absolute;right:12%;top:50%;width:320px;height:320px;margin-top:-160px;border-radius:50%;
+  background:radial-gradient(circle at 30% 25%,#fff,#9CA3AF 40%,#1b1c22 75%)}
+.no-webgl .fallback-orb{display:block}
+
+/* Entrance (CSS stagger) */
+@keyframes rise{from{opacity:0;transform:translateY(22px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+.rise{opacity:0;animation:rise .9s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0)*110ms + 150ms)}
+
+/* Trust strip */
+.metric{padding:1.25rem 1.5rem;text-align:center}
+.metric b{display:block;font-family:"JetBrains Mono",monospace;font-weight:500;font-size:clamp(.78rem,1.05vw,.9rem);letter-spacing:.14em;color:var(--plat-1)}
+.metric span{display:block;margin-top:.35rem;font-family:"JetBrains Mono",monospace;font-size:.66rem;letter-spacing:.18em;color:var(--plat-2)}
+.divider{width:1px;align-self:stretch;margin:.9rem 0;background:linear-gradient(180deg,transparent,rgba(244,244,246,.45),transparent)}
+@media (max-width:767px){
+  #metrics{display:grid;grid-template-columns:1fr 1fr}
+  .divider{display:none}
+  .metric:nth-child(1),.metric:nth-child(3){border-right:1px solid var(--hair)}
+  .metric:nth-child(1),.metric:nth-child(3){}
+  .m-row{border-top:1px solid var(--hair)}
+}
+.stub{min-height:70vh;display:flex;align-items:center;justify-content:center;border-top:1px solid var(--hair);background:var(--slate);
+  font-family:"JetBrains Mono",monospace;font-size:.75rem;letter-spacing:.2em;color:#6b7280;text-transform:uppercase}
+@media (prefers-reduced-motion:reduce){.rise{animation:none;opacity:1}html{scroll-behavior:auto}}
+.sec{position:relative;padding:9rem 1.5rem 6rem;background:linear-gradient(180deg,var(--void),var(--slate) 22%)}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:"JetBrains Mono",monospace;font-size:.7rem;letter-spacing:.22em;color:var(--plat-2);text-transform:uppercase;display:flex;align-items:center;gap:.75rem}
+.eyebrow::before{content:"";width:32px;height:1px;background:linear-gradient(90deg,transparent,#9CA3AF)}
+.h2{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;letter-spacing:-.045em;line-height:1;font-size:clamp(2rem,4.6vw,3.6rem)}
+.seg{display:inline-flex;position:relative;padding:4px;border-radius:999px}
+.seg button{position:relative;z-index:1;padding:.6rem 1.05rem;font:500 .72rem "JetBrains Mono",monospace;letter-spacing:.06em;color:var(--plat-2);background:none;border:0;border-radius:999px;cursor:pointer;transition:color .3s;white-space:nowrap}
+.seg button[aria-pressed=true]{color:#0b0c10}
+.seg .pill{position:absolute;top:4px;bottom:4px;left:0;border-radius:999px;background:linear-gradient(180deg,#FBFBFC,#B4B8C0);box-shadow:inset 0 1px 0 #fff;transition:transform .5s cubic-bezier(.2,.8,.2,1),width .5s cubic-bezier(.2,.8,.2,1)}
+.bento{display:grid;gap:1rem;grid-template-columns:repeat(12,1fr)}
+.bento>*{grid-column:span 12}
+.tilt{position:relative;border-radius:28px;padding:1.1rem;display:flex;flex-direction:column;overflow:hidden;transform:perspective(1000px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .45s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.tilt.active{transition:transform .08s linear}
+.tilt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;opacity:0;transition:opacity .35s;background:radial-gradient(440px circle at var(--gx,50%) var(--gy,0%),rgba(255,255,255,.16),rgba(255,255,255,.03) 40%,transparent 62%)}
+.tilt:hover::after{opacity:1}
+.tier{font:500 .68rem "JetBrains Mono",monospace;letter-spacing:.18em;color:var(--plat-2)}
+@media(min-width:900px){.b1{grid-column:span 7!important}.b2{grid-column:span 5!important}.b3{grid-column:span 12!important}}
+.pvbox{--bg:#ece8e0;--fg:#14130f;--mut:#6d675b;--line:rgba(20,19,15,.14);--panel:rgba(255,255,255,.62);--btn:#14130f;--btnfg:#f4f1ea;--acc:#8c6d3f;--ok:#2f7a4f;--glow:rgba(0,0,0,.09);--o1:#8e95a3;--o2:#3a3e48;--o3:#0c0d10;position:relative;flex:1;min-height:240px;margin-top:1.1rem;border-radius:18px;overflow:hidden;background:var(--bg);border:1px solid var(--hair);transition:background-color .6s}
+[data-mode=saas] .pvbox,[data-mode=spatial] .pvbox{--bg:#0b0c10;--fg:#f1f2f5;--mut:#8a909d;--line:rgba(255,255,255,.1);--panel:rgba(255,255,255,.04);--btn:#e8eaef;--btnfg:#0b0c10;--acc:#c9ced8;--ok:#8fcf9f;--glow:rgba(255,255,255,.08);--o1:#f4f4f6;--o2:#7c8391;--o3:#15161b}
+[data-mode=spatial] .pvbox{--bg:#05060a;--panel:rgba(20,21,28,.8)}
+.b1 .pvbox{flex:none;aspect-ratio:640/400}
+.b3 .pvbox{flex:none;aspect-ratio:760/420;max-height:580px}
+@media(max-width:899px){.b2 .pvbox{flex:none;aspect-ratio:560/520}}
+.pvfit{position:absolute;left:0;top:0;transform-origin:0 0}
+.pvp{position:relative;width:100%;height:100%;overflow:hidden;color:var(--fg);font:13px/1.4 Inter,system-ui,sans-serif;perspective:1200px}
+.pg{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+[data-mode=spatial] .pg{transform:rotateX(calc(var(--py,0)*-3deg + 2deg)) rotateY(calc(var(--px,0)*4deg - 3deg))}
+.a{position:absolute;transition:transform .7s cubic-bezier(.2,.8,.2,1),background-color .6s,border-color .6s,color .6s,box-shadow .6s}
+[data-mode=spatial] .zb{transform:translateZ(-60px)}
+[data-mode=spatial] .z1{transform:translateZ(16px)}
+[data-mode=spatial] .z2{transform:translateZ(44px)}
+[data-mode=spatial] .z3{transform:translateZ(78px)}
+[data-mode=spatial] .z2.pn,[data-mode=spatial] .z3.pn{box-shadow:0 30px 50px -24px rgba(0,0,0,.9)}
+.pn{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.pv-nav{display:flex;align-items:center;justify-content:space-between;padding:0 36px;border-bottom:1px solid var(--line)}
+.pv-br{font:700 11.5px "Plus Jakarta Sans",sans-serif;letter-spacing:.3em}
+.pv-lk{display:flex;gap:20px}
+.pv-lk i{font:500 9.5px "JetBrains Mono",monospace;font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.pv-lk i.on{color:var(--fg)}
+.pv-bt{display:inline-block;font:700 10px "Plus Jakarta Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:.8em 1.3em;border-radius:999px;background:var(--btn);color:var(--btnfg);white-space:nowrap;transition:background-color .6s,color .6s}
+.pv-mo{font:500 9px "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.pv-hd{font:600 40px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.05em;margin:10px 0 12px}
+.pv-tx{color:var(--mut);font-size:12px;line-height:1.6;margin:0;max-width:270px}
+.pv-book{display:grid;grid-template-columns:1fr 1fr 1fr auto;align-items:center;padding-right:8px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.pv-fd{padding:11px 14px;border-right:1px solid var(--line);white-space:nowrap}
+.pv-fd .pv-mo{letter-spacing:.1em}
+.pv-fd b{display:block;font:600 12px "Plus Jakarta Sans",sans-serif;margin-top:2px}
+.pv-img{border-radius:16px;overflow:hidden}
+.pv-img svg{display:block;width:100%;height:100%}
+.pv-chip{position:absolute;right:12px;top:12px;text-align:right;padding:8px 12px;border-radius:12px;background:rgba(10,10,14,.58);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f4f4f6;font:500 9px/1.5 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
+.pv-strip{display:flex;align-items:center;gap:28px;border-top:1px solid var(--line)}
+.pv-side{border-right:1px solid var(--line);background:var(--panel);padding:16px 12px}
+.pv-nv{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11.5px;color:var(--mut)}
+.pv-nv.on{background:var(--line);color:var(--fg)}
+.pv-nv u{width:10px;height:10px;border:1.5px solid currentColor;border-radius:3px}
+.pv-nv b{margin-left:auto;font:600 8.5px "JetBrains Mono",monospace;padding:2px 6px;border-radius:99px;background:var(--fg);color:var(--bg)}
+.pv-top{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--line)}
+.pv-sg{display:flex;padding:3px;border:1px solid var(--line);border-radius:99px}
+.pv-sg i{font:500 9px "JetBrains Mono",monospace;font-style:normal;padding:4px 10px;border-radius:99px;color:var(--mut)}
+.pv-sg i.on{background:var(--fg);color:var(--bg)}
+.pv-k{padding:10px 12px}
+.pv-kv{font:600 19px "Plus Jakarta Sans",sans-serif;letter-spacing:-.03em;margin-top:3px}
+.pv-d{font:500 9.5px "JetBrains Mono",monospace;color:var(--ok)}
+.ch-l{fill:none;stroke:var(--fg);stroke-width:1.6;stroke-linecap:round}
+.ch-e{fill:none;stroke:var(--mut);stroke-width:1;stroke-dasharray:3 4}
+.ch-g{stroke:var(--line);stroke-width:1}
+.ch-a .s1{stop-color:var(--fg);stop-opacity:.2}
+.ch-a .s2{stop-color:var(--fg);stop-opacity:0}
+.ch-dot{fill:var(--fg)}
+.pv-row{display:grid;grid-template-columns:68px 1fr 28px;align-items:center;gap:8px;font-size:10.5px;padding:5px 0}
+.pv-bar{height:4px;border-radius:9px;background:var(--line);overflow:hidden}
+.pv-bar i{display:block;height:100%;border-radius:9px;background:var(--fg);opacity:.85}
+.pv-ev{display:flex;gap:8px;font-size:10.5px;line-height:1.3;padding:4px 0;border-top:1px solid var(--line)}
+.pv-ev i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-top:5px}
+.pv-ev span{display:block;margin-top:2px}
+.hs-bg{background:radial-gradient(ellipse at 50% 58%,var(--glow),transparent 62%)}
+.hs-w{font:800 128px/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.07em;color:transparent;-webkit-text-stroke:1px var(--line);text-align:center;white-space:nowrap}
+.hs-fl{animation:pvfloat 7s ease-in-out infinite}
+.hs-ring{transform-origin:130px 130px;animation:pvring 9s ease-in-out infinite alternate}
+@keyframes pvfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pvring{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+.hs-ix{display:flex;align-items:center;gap:10px;padding:7px 0;font:500 10px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.hs-ix i{display:block;width:14px;height:1px;background:currentColor;transition:width .5s}
+.hs-ix.on{color:var(--fg)}.hs-ix.on i{width:30px}
+.hs-co{position:absolute}
+.hs-co b{display:block;font:600 12px "Plus Jakarta Sans",sans-serif;letter-spacing:-.01em;padding-left:2px}
+.hs-co span{display:block;font:500 9px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-top:3px}
+.hs-co::before{content:"";position:absolute;left:-54px;top:8px;width:46px;height:1px;background:var(--mut);opacity:.6}
+.hs-pg{flex:1;height:1px;background:var(--line);position:relative}
+.hs-pg::after{content:"";position:absolute;left:0;top:-.5px;height:2px;background:var(--fg);animation:pvprog 8s ease-in-out infinite alternate}
+@keyframes pvprog{from{width:12%}to{width:64%}}
+.tl{position:relative;max-width:980px;margin:4.5rem auto 0;padding-left:2.2rem}
+.rail{position:absolute;left:0;top:0;bottom:0;width:1px;background:rgba(255,255,255,.1)}
+.fill{position:absolute;left:0;top:0;width:100%;background:#F4F4F6}
+.step{position:relative;display:grid;gap:1.2rem 3rem;padding:3.2rem 0 3.6rem;border-top:1px solid var(--hair)}
+.step:first-child{border-top:0}
+@media(min-width:768px){.step{grid-template-columns:190px 1fr;padding:4rem 0 4.4rem}}
+.dot{position:absolute;left:-2.2rem;top:4.7rem;width:7px;height:7px;margin-left:-3px;border-radius:50%;background:#3a3d46;overflow:hidden}
+.dotlit{position:absolute;inset:0;border-radius:50%;background:#F4F4F6}
+.num{position:relative;font:800 clamp(4.2rem,9vw,7.2rem)/.85 "Plus Jakarta Sans",sans-serif;letter-spacing:-.07em}
+.num .o{display:block;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.22)}
+.num .f{position:absolute;inset:0;display:block;-webkit-text-stroke:1px rgba(214,218,226,.6);background:linear-gradient(180deg,#F4F4F6,#7f8591);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sbody h3{margin:0 0 .8rem;font:700 clamp(1.5rem,3vw,2.2rem)/1.1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.04em}
+.sbody p{margin:0;color:var(--plat-2);line-height:1.7;max-width:520px;font-size:1.02rem}
+.sbody .tag{display:block;margin-top:1.4rem;font:500 .66rem "JetBrains Mono",monospace;letter-spacing:.18em;color:#7b8190}
+@media (prefers-reduced-motion:reduce){.tilt{transition:none}}
+.tiers{display:grid;gap:1.1rem;grid-template-columns:1fr;margin-top:3.5rem;align-items:stretch}
+@media(min-width:960px){.tiers{grid-template-columns:repeat(3,1fr);gap:1.25rem}.tier-flag{margin-top:-18px;margin-bottom:-18px}}
+.tcard{position:relative;display:flex;flex-direction:column;border-radius:28px;padding:1.9rem 1.7rem 1.7rem;opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1),border-color .35s}
+.tcard.in{opacity:1;transform:none}
+.tcard:not(.tier-flag):hover{border-color:rgba(255,255,255,.2)}
+.tcard h3{margin:.9rem 0 .2rem;font:800 1.9rem/1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.045em}
+.tcard .sub{font:500 .68rem "JetBrains Mono",monospace;letter-spacing:.18em;color:var(--plat-2);text-transform:uppercase}
+.dlv{display:inline-flex;align-items:center;gap:.5rem;margin-top:1.4rem;padding:.5rem .8rem;border-radius:999px;border:1px solid var(--hair);background:rgba(255,255,255,.04);font:500 .68rem "JetBrains Mono",monospace;letter-spacing:.14em;color:var(--plat-1);align-self:flex-start}
+.dlv::before{content:"";width:6px;height:6px;border-radius:50%;background:#F4F4F6;box-shadow:0 0 8px #F4F4F6}
+.feat{list-style:none;margin:1.6rem 0 2rem;padding:1.4rem 0 0;border-top:1px solid var(--hair);display:grid;gap:.85rem;flex:1}
+.feat li{position:relative;padding-left:1.7rem;font-size:.92rem;line-height:1.45;color:#cfd2d9}
+.feat li::before{content:"";position:absolute;left:.15rem;top:.32rem;width:.5rem;height:.28rem;border-left:1.5px solid #F4F4F6;border-bottom:1.5px solid #F4F4F6;transform:rotate(-45deg)}
+.tier-flag{background:linear-gradient(180deg,rgba(26,27,34,.72),rgba(14,15,19,.62));box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 0 70px -12px rgba(244,244,246,.28),0 40px 80px -30px #000;border-color:transparent}
+.tier-flag::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;background:linear-gradient(145deg,#fff 0%,#9CA3AF 28%,rgba(255,255,255,.1) 55%,#F4F4F6 80%,#9CA3AF 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rim 5s ease-in-out infinite alternate}
+@keyframes rim{from{opacity:.75}to{opacity:1}}
+.badge{position:absolute;top:1.3rem;right:1.3rem;padding:.38rem .7rem;border-radius:999px;font:600 .62rem "JetBrains Mono",monospace;letter-spacing:.2em;color:#0b0c10;background:linear-gradient(180deg,#FBFBFC,#B4B8C0);box-shadow:inset 0 1px 0 #fff,0 6px 18px -6px rgba(244,244,246,.5)}
+.pricing-glow{position:absolute;left:50%;top:58%;width:720px;height:520px;max-width:100%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(244,244,246,.07),transparent);pointer-events:none}
+@media (prefers-reduced-motion:reduce){.tcard{opacity:1;transform:none;transition:none}.tier-flag::before{animation:none}}
+.rv{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1),border-color .35s}
+.rv.in{opacity:1;transform:none}
+.svc{position:relative;border-radius:28px;padding:1.9rem 1.7rem;overflow:hidden}
+.svc::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(420px circle at 50% 0%,rgba(255,255,255,.1),transparent 60%)}
+.svc:hover{border-color:rgba(255,255,255,.2)}.svc:hover::after{opacity:1}
+.svc-ico{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;margin-bottom:1.4rem;color:#0b0c10;background:linear-gradient(145deg,#F4F4F6,#8b919c);box-shadow:inset 0 1px 0 #fff}
+.svc h3{margin:.7rem 0 .7rem;font:700 1.45rem/1.12 "Plus Jakarta Sans",sans-serif;letter-spacing:-.035em}
+.svc-p{margin:0;color:var(--plat-2);line-height:1.65;font-size:.95rem}
+.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.3rem}
+.chips>span{padding:.35rem .65rem;border-radius:999px;border:1px solid var(--hair);background:rgba(255,255,255,.04);font:500 .64rem "JetBrains Mono",monospace;letter-spacing:.1em;color:#cfd2d9}
+.fsi{padding:1rem 1.1rem;border-radius:18px;border:1px solid var(--hair);background:rgba(255,255,255,.025)}
+.fsi b{display:block;font:700 .98rem "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.fsi span{display:block;margin-top:.3rem;font-size:.84rem;line-height:1.5;color:var(--plat-2)}
+.arch{position:relative;border:1px solid var(--hair);border-radius:24px;padding:1.2rem 1rem 1.5rem;background-color:rgba(255,255,255,.012);background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:28px 28px}
+.arch svg{display:block;width:100%;height:auto;max-width:460px;margin:0 auto;overflow:visible}
+.arch .lyr{cursor:pointer;outline:none}
+.arch .lift{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.arch .lyr.on .lift{transform:translateY(-6px)}
+.arch .side{fill:rgba(255,255,255,.03);stroke:rgba(255,255,255,.1)}
+.arch .top{fill:rgba(255,255,255,.025);stroke:rgba(255,255,255,.2);transition:fill .5s,stroke .5s}
+.arch .lyr.on .top{fill:rgba(244,244,246,.08);stroke:rgba(244,244,246,.6)}
+.arch .nd{fill:rgba(255,255,255,.03);stroke:rgba(255,255,255,.24);stroke-width:1.2;transition:fill .5s,stroke .5s}
+.arch .lyr.on .nd{fill:rgba(244,244,246,.1);stroke:rgba(244,244,246,.8)}
+.arch .ln{fill:none;stroke:rgba(255,255,255,.2);stroke-width:1}
+.arch .ld{stroke:rgba(255,255,255,.22);stroke-width:1;fill:none}
+.arch .l-n{font:500 9px "JetBrains Mono",monospace;letter-spacing:.2em;fill:#6b7280}
+.arch .l-t{font:700 14px "Plus Jakarta Sans",sans-serif;letter-spacing:.06em;fill:#848b99;transition:fill .4s}
+.arch .l-s{font:500 9.5px "JetBrains Mono",monospace;fill:#7b8190}
+.arch .lyr.on .l-t,.arch .lyr.on .l-n{fill:#F4F4F6}
+.arch .lyr:focus-visible .top{stroke:#fff}
+.arch .rod{fill:none;stroke:rgba(255,255,255,.22);stroke-width:1;stroke-dasharray:2 4;stroke-linecap:round}
+.arch .port{fill:#0D0E12;stroke:rgba(255,255,255,.45);stroke-width:1}
+.arch .pk{fill:#F4F4F6}
+.arch-d{margin:1.4rem .4rem 0;padding-top:1.2rem;border-top:1px solid var(--hair);min-height:150px;transition:opacity .35s}
+.arch-d.sw{opacity:0}
+.arch-d h4{margin:.5rem 0 .5rem;font:700 1.35rem/1.1 "Plus Jakarta Sans",sans-serif;letter-spacing:-.035em}
+.arch-d p.d{margin:0;color:var(--plat-2);font-size:.92rem;line-height:1.6}
+.bestfor{margin:.9rem 0 0;font-size:.88rem;line-height:1.5;color:#cfd2d9}
+.bestfor b{font:500 .62rem "JetBrains Mono",monospace;letter-spacing:.16em;color:var(--plat-2);margin-right:.3rem}
+.faq{border-radius:22px;overflow:hidden}
+.faq button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.3rem 1.5rem;background:none;border:0;color:var(--plat-1);text-align:left;cursor:pointer;font:600 1.02rem/1.35 "Plus Jakarta Sans",sans-serif;letter-spacing:-.02em}
+.plus{position:relative;flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--glass-border);background:rgba(255,255,255,.04)}
+.plus::before,.plus::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:1.5px;margin:-.75px 0 0 -5px;background:#F4F4F6;transition:transform .4s}
+.plus::after{transform:rotate(90deg)}
+.faq.open .plus::after{transform:rotate(0)}
+.faq.open{border-color:rgba(255,255,255,.22)}
+.fa{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.8,.2,1)}
+.fa>div{overflow:hidden}
+.faq.open .fa{grid-template-rows:1fr}
+.fa p{margin:0;padding:0 1.5rem 1.4rem;color:var(--plat-2);line-height:1.7;max-width:680px}
+.foot{position:relative;overflow:hidden;background:var(--void);border-top:1px solid var(--hair);padding:5rem 1.5rem calc(2rem + env(safe-area-inset-bottom,0px))}
+.foot::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(244,244,246,.5),transparent)}
+.foot-glow{position:absolute;left:50%;bottom:-300px;width:1100px;height:560px;max-width:170%;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(244,244,246,.17),rgba(156,163,175,.06) 55%,transparent);pointer-events:none;animation:glowrise 7s ease-in-out infinite alternate}
+@keyframes glowrise{from{transform:translateX(-50%) translateY(30px);opacity:.55}to{transform:translateX(-50%) translateY(-24px);opacity:1}}
+.fh{margin:0 0 1rem;font:500 .68rem "JetBrains Mono",monospace;letter-spacing:.2em;color:#6b7280;text-transform:uppercase}
+.flink{display:block;padding:.32rem 0;color:var(--plat-2);text-decoration:none;font-size:.92rem;transition:color .25s}
+.flink:hover{color:var(--plat-1)}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.conn::after,.foot-glow{animation:none}}
+#metrics{background:rgba(16,17,22,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+.metric{padding:.95rem 1.2rem}
+.metric b{font-size:.72rem;color:#cfd2d9;letter-spacing:.16em}
+.metric span{font-size:.58rem;color:#7b8190}
+.divider{opacity:.45}
+.svc.glass{background:none;border:0;border-top:1px solid var(--hair);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:0;padding:1.9rem 1.6rem}
+@media(min-width:768px){.svc.glass+.svc.glass{border-left:1px solid var(--hair)}}
+/* ---- Final polish: calmer surfaces, clearer hierarchy ---- */
+.fsi{padding:1rem 0 0;border:0;border-top:1px solid var(--hair);border-radius:0;background:none}
+.tiers{align-items:center}
+@media(min-width:960px){.tiers{grid-template-columns:1fr 1fr 1.2fr}.tier-flag{margin-top:-26px;margin-bottom:-26px}}
+.tcard.glass{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border:1px solid var(--hair)}
+.tcard:nth-child(2).glass{background:rgba(255,255,255,.025)}
+.tcard.tier-flag.glass{background:linear-gradient(180deg,#15161c 0%,#0b0c10 100%);border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 40px 90px -40px #000;padding-top:2.7rem;padding-bottom:2.3rem}
+.tier-flag::before{animation:none;padding:1px;opacity:.9}
+.tier-flag h3{font-size:2.4rem}
+.faq.glass{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border:0;border-bottom:1px solid var(--hair);border-radius:0}
+.faq.glass.open{border-bottom-color:rgba(255,255,255,.22)}
+.faq button{padding:1.5rem .2rem;font-size:1.1rem}
+.fa p{padding:0 .2rem 1.6rem}
+.foot .glass{background:rgba(255,255,255,.02);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.foot-glow{background:radial-gradient(closest-side,rgba(244,244,246,.11),rgba(156,163,175,.04) 55%,transparent)}
+@media (max-width:480px){#modeSeg{display:flex;width:100%}#modeSeg button{flex:1;padding:.6rem .25rem;font-size:.6rem;letter-spacing:0}}
+</style>
+<style id="tw-compiled">/* Tailwind CSS 3.4.17, compiled with the Tailwind CLI (utilities used on this page only) */
+*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:JetBrains Mono,ui-monospace,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.pointer-events-auto{pointer-events:auto}.\!visible{visibility:visible!important}.visible{visibility:visible}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.left-0{left:0}.right-0{right:0}.top-\[calc\(100\%\+10px\)\]{top:calc(100% + 10px)}.z-10{z-index:10}.z-20{z-index:20}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-10{margin-bottom:2.5rem}.mb-2\.5{margin-bottom:.625rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mb-6{margin-bottom:1.5rem}.mt-1{margin-top:.25rem}.mt-10{margin-top:2.5rem}.mt-12{margin-top:3rem}.mt-14{margin-top:3.5rem}.mt-16{margin-top:4rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.mt-9{margin-top:2.25rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:.375rem}.h-10{height:2.5rem}.h-7{height:1.75rem}.h-8{height:2rem}.h-full{height:100%}.h-px{height:1px}.w-1\.5{width:.375rem}.w-10{width:2.5rem}.w-7{width:1.75rem}.w-8{width:2rem}.w-full{width:100%}.max-w-\[1040px\]{max-width:1040px}.max-w-\[1080px\]{max-width:1080px}.max-w-\[1240px\]{max-width:1240px}.max-w-\[260px\]{max-width:260px}.max-w-\[420px\]{max-width:420px}.max-w-\[460px\]{max-width:460px}.max-w-\[500px\]{max-width:500px}.max-w-\[520px\]{max-width:520px}.max-w-\[540px\]{max-width:540px}.max-w-\[720px\]{max-width:720px}.grow{flex-grow:1}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.resize{resize:both}.flex-col{flex-direction:column}.place-items-center{place-items:center}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-10{gap:2.5rem}.gap-12{gap:3rem}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.self-start{align-self:flex-start}.overflow-hidden{overflow:hidden}.rounded-3xl{border-radius:1.5rem}.rounded-\[28px\]{border-radius:28px}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.border{border-width:1px}.border-t{border-top-width:1px}.border-white\/10{border-color:hsla(0,0%,100%,.1)}.bg-\[\#F4F4F6\]{--tw-bg-opacity:1;background-color:rgb(244 244 246/var(--tw-bg-opacity,1))}.bg-white\/5{background-color:hsla(0,0%,100%,.05)}.bg-gradient-to-r{background-image:linear-gradient(to right,var(--tw-gradient-stops))}.from-transparent{--tw-gradient-from:transparent var(--tw-gradient-from-position);--tw-gradient-to:transparent var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}.to-\[\#9CA3AF\]{--tw-gradient-to:#9ca3af var(--tw-gradient-to-position)}.p-3{padding:.75rem}.\!py-3{padding-top:.75rem!important;padding-bottom:.75rem!important}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.px-7{padding-left:1.75rem;padding-right:1.75rem}.px-8{padding-left:2rem;padding-right:2rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pb-32{padding-bottom:8rem}.pl-5{padding-left:1.25rem}.pr-2{padding-right:.5rem}.pt-28{padding-top:7rem}.pt-6{padding-top:1.5rem}.text-center{text-align:center}.font-display{font-family:Plus Jakarta Sans,system-ui,sans-serif}.font-mono{font-family:JetBrains Mono,ui-monospace,monospace}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[13px\]{font-size:13px}.text-\[15px\]{font-size:15px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.tracking-\[-0\.035em\]{letter-spacing:-.035em}.tracking-\[-0\.03em\]{letter-spacing:-.03em}.tracking-\[\.16em\]{letter-spacing:.16em}.tracking-\[\.18em\]{letter-spacing:.18em}.tracking-\[\.22em\]{letter-spacing:.22em}.tracking-\[\.2em\]{letter-spacing:.2em}.text-\[\#6b7280\]{--tw-text-opacity:1;color:rgb(107 114 128/var(--tw-text-opacity,1))}.text-\[\#9CA3AF\]{--tw-text-opacity:1;color:rgb(156 163 175/var(--tw-text-opacity,1))}.text-\[\#F4F4F6\]{--tw-text-opacity:1;color:rgb(244 244 246/var(--tw-text-opacity,1))}.no-underline{text-decoration-line:none}.ease-in-out{transition-timing-function:cubic-bezier(.4,0,.2,1)}@media (min-width:640px){.sm\:block{display:block}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}}@media (min-width:768px){.md\:flex{display:flex}.md\:flex-1{flex:1 1 0%}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}.md\:items-stretch{align-items:stretch}.md\:justify-center{justify-content:center}.md\:justify-between{justify-content:space-between}.md\:rounded-full{border-radius:9999px}.md\:px-10{padding-left:2.5rem;padding-right:2.5rem}.md\:pb-16{padding-bottom:4rem}.md\:text-2xl{font-size:1.5rem;line-height:2rem}.md\:text-lg{font-size:1.125rem;line-height:1.75rem}}@media (min-width:1024px){.lg\:sticky{position:sticky}.lg\:top-28{top:7rem}.lg\:flex{display:flex}.lg\:hidden{display:none}.lg\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lg\:grid-cols-\[\.8fr_1\.2fr\]{grid-template-columns:.8fr 1.2fr}.lg\:grid-cols-\[1\.15fr_\.85fr\]{grid-template-columns:1.15fr .85fr}.lg\:flex-row{flex-direction:row}.lg\:items-end{align-items:flex-end}.lg\:items-center{align-items:center}.lg\:justify-between{justify-content:space-between}.lg\:gap-20{gap:5rem}.lg\:justify-self-end{justify-self:end}}
+</style>
+</head>
+<body>
+
+<!-- FRAME 01 — Floating glass navbar -->
+<header class="fixed left-0 right-0 z-50 flex justify-center px-3 pointer-events-none" style="top:calc(20px + env(safe-area-inset-top,0px))">
+  <nav class="glass pointer-events-auto relative flex items-center justify-between gap-6 rounded-full py-2 pl-5 pr-2 w-full max-w-[1040px]" aria-label="Primary">
+    <a href="#hero" class="flex items-center gap-2.5 no-underline" aria-label="Ironclad Web home">
+      <span class="grid place-items-center h-7 w-7 rounded-lg" style="background:linear-gradient(145deg,#F4F4F6,#7b818c);box-shadow:inset 0 1px 0 #fff">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b0c10" stroke-width="2.6" stroke-linecap="square"><path d="M5 4h14M12 4v16M5 20h14"/></svg>
+      </span>
+      <span class="font-display font-extrabold text-[15px] tracking-[-0.03em] text-[#F4F4F6]">Ironclad<span class="text-[#9CA3AF] font-semibold"> Web</span></span>
+    </a>
+    <div class="hidden lg:flex items-center gap-5">
+      <a class="nav-link" href="#services">Services</a>
+      <a class="nav-link" href="#showcase">Showcase</a>
+      <a class="nav-link" href="#fullstack">Full-Stack</a>
+      <a class="nav-link" href="#process">Process</a>
+      <a class="nav-link" href="#packages">Packages</a>
+      <a class="nav-link" href="#faq">FAQ</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <a class="btn-plat text-[13px] px-4 py-2.5" target="_blank" rel="noopener" href="https://wa.me/918146692303?text=Hi%2C%20I%27d%20like%20to%20discuss%20building%20a%20luxury%20website">Start a Project</a>
+      <button id="menuBtn" class="lg:hidden grid place-items-center h-10 w-10 rounded-full border border-white/10 bg-white/5" aria-label="Menu" aria-expanded="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F4F4F6" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>
+      </button>
+    </div>
+    <div id="mobileMenu" class="glass hidden lg:hidden absolute left-0 right-0 top-[calc(100%+10px)] rounded-3xl p-3 flex-col">
+      <a class="nav-link block !py-3 px-3 text-base" href="#services">Services</a>
+      <a class="nav-link block !py-3 px-3 text-base" href="#showcase">Showcase</a>
+      <a class="nav-link block !py-3 px-3 text-base" href="#fullstack">Full-Stack</a>
+      <a class="nav-link block !py-3 px-3 text-base" href="#process">Process</a>
+      <a class="nav-link block !py-3 px-3 text-base" href="#packages">Packages</a>
+      <a class="nav-link block !py-3 px-3 text-base" href="#faq">FAQ</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+<!-- FRAME 02 — 3D hero -->
+<section id="hero" aria-label="Hero">
+  <div id="stage" aria-hidden="true"><div class="fallback-orb"></div></div>
+
+  <div class="relative z-10 h-full mx-auto max-w-[1240px] px-6 md:px-10 flex flex-col justify-end md:justify-center pb-32 md:pb-16 pt-28">
+    <div class="max-w-[720px]">
+      <p class="rise font-mono text-[11px] tracking-[.22em] text-[#9CA3AF] uppercase mb-6 flex items-center gap-3" style="--i:0">
+        <span class="inline-block h-px w-8 bg-gradient-to-r from-transparent to-[#9CA3AF]"></span>Luxury Web &amp; Full-Stack Engineering
+      </p>
+      <h1 class="rise font-display font-extrabold plat-text" style="--i:1;font-size:clamp(2.6rem,5.2vw,4.9rem);line-height:.98;letter-spacing:-.045em">
+        Engineered Luxury.<br>Full-Stack Power.
+      </h1>
+      <p class="rise mt-6 text-[#9CA3AF] text-base md:text-lg leading-relaxed max-w-[520px]" style="--i:2">
+        From interactive 3D brand flagships to custom full-stack web applications — built like precision instruments, owned 100% by you.
+      </p>
+      <div class="rise mt-9 flex flex-col sm:flex-row gap-3" style="--i:3">
+        <a href="#packages" class="btn-plat px-7 py-4 text-[15px]">View Packages
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        </a>
+        <a href="https://wa.me/918146692303?text=Hi%2C%20I%27d%20like%20to%20discuss%20building%20a%20luxury%20website" target="_blank" rel="noopener" class="btn-ghost px-7 py-4 text-[15px]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3.5A11 11 0 0 0 3.2 17.3L2 22l4.8-1.2A11 11 0 0 0 22 12a10.9 10.9 0 0 0-1.5-8.5ZM12 20a8.9 8.9 0 0 1-4.5-1.2l-.3-.2-2.8.7.8-2.7-.2-.3A8.9 8.9 0 1 1 12 20Zm4.9-6.6c-.3-.1-1.6-.8-1.8-.9s-.4-.1-.6.1-.7.9-.8 1-.3.2-.6 0a7.2 7.2 0 0 1-3.6-3.1c-.3-.5.3-.5.8-1.5.1-.2 0-.3 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7s1.8 2.8 4.4 3.9c1.6.7 2.3.7 3.1.6.5-.1 1.6-.7 1.8-1.3s.2-1.2.2-1.3-.2-.2-.5-.4Z"/></svg>
+          Book via WhatsApp · +91 8146692303
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRAME 03 — Engineering & trust strip (overlaps hero bottom edge) -->
+  <div class="absolute left-0 right-0 z-20 px-3 md:px-10 flex justify-center" style="bottom:0;transform:translateY(50%)">
+    <div id="metrics" class="glass rounded-[28px] md:rounded-full w-full max-w-[1080px] md:flex md:items-stretch md:justify-between overflow-hidden rise" style="--i:5">
+      <div class="metric md:flex-1"><b>BESPOKE UI</b><span>ZERO TEMPLATES</span></div>
+      <div class="divider"></div>
+      <div class="metric md:flex-1"><b>60 FPS 3D</b><span>WEBGL &amp; MOTION</span></div>
+      <div class="divider"></div>
+      <div class="metric md:flex-1 m-row"><b>FULL-STACK</b><span>CUSTOM PLATFORMS</span></div>
+      <div class="divider"></div>
+      <div class="metric md:flex-1 m-row"><b>100% OWNED</b><span>CODE &amp; INFRASTRUCTURE</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Anchor stubs for upcoming frames -->
+<!-- FRAME 04 — Core capabilities (#services) -->
+<section id="services" class="sec">
+  <div class="wrap">
+    <div class="grid gap-6 lg:grid-cols-[1.15fr_.85fr] lg:items-end"><div><p class="eyebrow mb-5">01 / Core Capabilities</p>
+    <h2 class="h2 plat-text">Three pillars.<br>One studio.</h2></div>
+    <p class="text-[#9CA3AF] max-w-[420px] leading-relaxed lg:justify-self-end">Design, immersion and engineering under one roof, so your brand and your platform are built to the same standard.</p></div>
+    <div class="grid gap-4 md:grid-cols-3 mt-12">
+      <article class="svc glass rv">
+        <div class="svc-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h5"/></svg></div>
+        <p class="tier">01 &middot; PREMIUM WEB DESIGN</p>
+        <h3>Editorial brand sites that convert.</h3>
+        <p class="svc-p">High-converting editorial and brand websites crafted with bespoke typography, fluid glass UI and sub-second load speeds.</p>
+        <div class="chips"><span>Bespoke typography</span><span>Fluid glass UI</span><span>Sub-second loads</span></div>
+      </article>
+      <article class="svc glass rv" style="transition-delay:120ms">
+        <div class="svc-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></div>
+        <p class="tier">02 &middot; IMMERSIVE 3D WEBSITES</p>
+        <h3>Depth that commands attention.</h3>
+        <p class="svc-p">Interactive WebGL hero centerpieces, spatial depth and hardware-accelerated motion choreography that command attention.</p>
+        <div class="chips"><span>WebGL heroes</span><span>Spatial depth</span><span>Motion choreography</span></div>
+      </article>
+      <article class="svc glass rv" style="transition-delay:240ms">
+        <div class="svc-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+        <p class="tier">03 &middot; FULL-STACK DEVELOPMENT</p>
+        <h3>Platforms built for scale.</h3>
+        <p class="svc-p">Custom web applications, booking engines, client portals, admin dashboards and API integrations built for scale.</p>
+        <div class="chips"><span>Booking engines</span><span>Client portals</span><span>Admin dashboards</span><span>API integrations</span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Showcase (#showcase) -->
+<section id="showcase" class="sec" style="padding-top:6rem;background:var(--slate)">
+  <div class="wrap">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-10">
+      <div>
+        <p class="eyebrow mb-5">02 / Live Showcase</p>
+        <h2 class="h2 plat-text">Craft you can feel.</h2>
+        <p class="mt-4 text-[#9CA3AF] max-w-[460px] leading-relaxed">Pick a style, then move your cursor across the cards. Every tier is built to respond.</p>
+      </div>
+      <div>
+        <p class="font-mono text-[10px] tracking-[.2em] text-[#9CA3AF] mb-2.5 flex items-center gap-2"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[#F4F4F6]" style="box-shadow:0 0 8px #F4F4F6"></span>LIVE PREVIEW MODE</p>
+        <div class="seg glass" id="modeSeg" role="group" aria-label="Live preview mode">
+          <span class="pill"></span>
+          <button data-mode="editorial" aria-pressed="true">Minimal Editorial</button>
+          <button data-mode="saas" aria-pressed="false">SaaS Dark</button>
+          <button data-mode="spatial" aria-pressed="false">3D Spatial UI</button>
+        </div>
+      </div>
+    </div>
+    <div class="bento" id="bento" data-mode="editorial"></div>
+  </div>
+</section>
+
+<!-- FRAME 05 — Full-stack engineering (#fullstack) -->
+<section id="fullstack" class="sec" style="background:var(--slate);padding-top:6rem;border-top:1px solid var(--hair)">
+  <div class="wrap grid gap-12 lg:grid-cols-2 lg:items-center">
+    <div class="rv">
+      <p class="eyebrow mb-5">03 / Full-Stack Engineering</p>
+      <h2 class="h2 plat-text">Not just a frontend.<br>A complete platform.</h2>
+      <p class="mt-4 text-[#9CA3AF] max-w-[500px] leading-relaxed">Most studios stop at the interface. We build the whole system behind it, so your website can take bookings, run your operations and grow with you.</p>
+      <div class="grid sm:grid-cols-2 gap-3 mt-8">
+        <div class="fsi"><b>Custom dashboards</b><span>Role-based admin and client portals with live data.</span></div>
+        <div class="fsi"><b>Booking systems</b><span>Availability, reservations and confirmations that run themselves.</span></div>
+        <div class="fsi"><b>WhatsApp &amp; payments</b><span>Automated messages, invoices and payment flows.</span></div>
+        <div class="fsi"><b>Scalable backends</b><span>Secure APIs and databases that grow with your traffic.</span></div>
+      </div>
+    </div>
+    <div class="rv" style="transition-delay:140ms">
+      <p class="font-mono text-[10px] tracking-[.2em] text-[#9CA3AF] mb-3">SYSTEM ARCHITECTURE &middot; TAP A LAYER</p>
+      <div class="arch" id="arch">
+        <svg id="archSvg" viewBox="0 0 420 430" role="group" aria-label="Three connected layers: frontend and experience, backend and logic, data and infrastructure">
+          <g id="archFlow"></g>
+      <g class="lyr on" data-i="0" tabindex="0" role="button" aria-pressed="true" aria-label="Layer 01: Frontend and Experience">
+        <g transform="translate(150 70)"><g class="lift">
+          <path class="side" d="M-100 0 L0 50 L100 0 V9 L0 59 L-100 9Z"/>
+          <path class="top" d="M-100 0 L0 -50 L100 0 L0 50Z"/>
+          <g transform="scale(1 .5) rotate(45)"><rect class="nd" x="-56" y="-56" width="62" height="44" rx="5"/><rect class="nd" x="16" y="-56" width="40" height="20" rx="4"/><rect class="nd" x="16" y="-28" width="40" height="16" rx="4"/><rect class="nd" x="-56" y="2" width="112" height="14" rx="4"/><circle class="nd" cx="-25" cy="38" r="9"/><circle class="nd" cx="0" cy="38" r="9"/><circle class="nd" cx="25" cy="38" r="9"/></g>
+        </g></g>
+        <path class="ld" d="M254 70 H264"/>
+        <text class="l-n" x="270" y="56">01</text>
+        <text class="l-t" x="270" y="74">FRONTEND</text>
+        <text class="l-s" x="270" y="90">React · Three.js</text>
+      </g>
+      <g class="lyr" data-i="1" tabindex="0" role="button" aria-pressed="false" aria-label="Layer 02: Backend and Logic">
+        <g transform="translate(150 210)"><g class="lift">
+          <path class="side" d="M-100 0 L0 50 L100 0 V9 L0 59 L-100 9Z"/>
+          <path class="top" d="M-100 0 L0 -50 L100 0 L0 50Z"/>
+          <g transform="scale(1 .5) rotate(45)"><path class="ln" d="M-8 -36 H8 M-32 -16 V-4 M32 -16 V-4 M-8 16 H8"/><rect class="nd" x="-56" y="-56" width="48" height="40" rx="5"/><rect class="nd" x="8" y="-56" width="48" height="40" rx="5"/><rect class="nd" x="-56" y="-4" width="48" height="40" rx="5"/><rect class="nd" x="8" y="-4" width="48" height="40" rx="5"/><rect class="nd" x="-56" y="46" width="112" height="12" rx="4"/></g>
+        </g></g>
+        <path class="ld" d="M254 210 H264"/>
+        <text class="l-n" x="270" y="196">02</text>
+        <text class="l-t" x="270" y="214">BACKEND</text>
+        <text class="l-s" x="270" y="230">APIs · Auth · Payments</text>
+      </g>
+      <g class="lyr" data-i="2" tabindex="0" role="button" aria-pressed="false" aria-label="Layer 03: Data and Infrastructure">
+        <g transform="translate(150 350)"><g class="lift">
+          <path class="side" d="M-100 0 L0 50 L100 0 V9 L0 59 L-100 9Z"/>
+          <path class="top" d="M-100 0 L0 -50 L100 0 L0 50Z"/>
+          <g transform="scale(1 .5) rotate(45)"><path class="ln" d="M-16 -10 L-8 12 M16 -10 L8 12"/><circle class="nd" cx="-30" cy="-24" r="20"/><circle class="nd" cx="30" cy="-24" r="20"/><circle class="nd" cx="0" cy="30" r="20"/></g>
+        </g></g>
+        <path class="ld" d="M254 350 H264"/>
+        <text class="l-n" x="270" y="336">03</text>
+        <text class="l-t" x="270" y="354">DATA</text>
+        <text class="l-s" x="270" y="370">Database · Cloud · Backups</text>
+      </g>
+        </svg>
+        <div class="arch-d" id="archD" aria-live="polite">
+          <p class="tier" id="aT">LAYER 01</p>
+          <h4 id="aH">Frontend &amp; Experience</h4>
+          <p class="d" id="aP"></p>
+          <div class="chips" id="aC"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Process (#process) -->
+<section id="process" class="sec" style="background:var(--slate);padding-top:6rem">
+  <div class="wrap">
+    <p class="eyebrow mb-5">04 / The Reliability Architecture</p>
+    <h2 class="h2 plat-text">Zero-stress delivery.</h2>
+    <p class="mt-4 text-[#9CA3AF] max-w-[520px] leading-relaxed">Four fixed steps, clear approvals and nothing hidden. You always know what happens next.</p>
+    <div id="tl-root"></div>
+  </div>
+</section>
+<!-- FRAME 06 — Bespoke engagement tiers -->
+<section id="packages" class="sec" style="background:var(--void);padding-top:6rem;overflow:hidden">
+  <div class="pricing-glow"></div>
+  <div class="wrap relative">
+    <p class="eyebrow mb-5">05 / Packages</p>
+    <h2 class="h2 plat-text">Scoped to your ambition.</h2>
+    <p class="mt-4 text-[#9CA3AF] max-w-[540px] leading-relaxed">No public price tags. Every project is quoted to its real scope, speed and deliverables, so you pay for what you need and nothing you don’t.</p>
+
+    <div class="tiers" id="tiers">
+      <article class="tcard glass" style="transition-delay:0ms">
+        <p class="sub">Tier 01 · Launch &amp; Presence</p>
+        <h3>Essential</h3>
+        <p class="bestfor"><b>BEST FOR:</b> Startups, clinics, gyms and local businesses that need a sharp 1-page launch.</p>
+        <span class="dlv">3–5 DAYS DELIVERY</span>
+        <ul class="feat">
+          <li>1-Page High-Impact Website, built to launch fast</li>
+          <li>Free 1st-Year Domain &amp; Cloud Hosting</li>
+          <li>Foundational On-Page SEO</li>
+          <li>Google Analytics Setup</li>
+          <li>Contact form &amp; WhatsApp click-to-chat</li>
+          <li>Mobile-First Responsive Design</li>
+        </ul>
+        <a class="btn-ghost px-6 py-4 text-[15px]" target="_blank" rel="noopener" href="https://wa.me/918146692303?text=Hi!%20I%27d%20like%20to%20get%20a%20quote%20for%20the%20Essential%20%28Launch%20%26%20Presence%29%20website%20package.%20Here%27s%20a%20bit%20about%20my%20business%3A">Request Tailored Quote</a>
+      </article>
+
+      <article class="tcard glass" style="transition-delay:120ms">
+        <p class="sub">Tier 02 · Growth &amp; Authority</p>
+        <h3>Signature</h3>
+        <p class="bestfor"><b>BEST FOR:</b> Growing brands that need multi-page authority, a CMS and integrations.</p>
+        <span class="dlv">7–10 DAYS DELIVERY</span>
+        <ul class="feat">
+          <li>3 to 5 Custom Pages with CMS-ready editing</li>
+          <li>Fluid Glass UI &amp; Scroll Choreography</li>
+          <li>Full On-Page &amp; Technical SEO</li>
+          <li>Google Analytics &amp; Search Console</li>
+          <li>Integrations: forms, booking &amp; WhatsApp</li>
+          <li>Free 1st-Year Domain &amp; Hosting</li>
+        </ul>
+        <a class="btn-ghost px-6 py-4 text-[15px]" target="_blank" rel="noopener" href="https://wa.me/918146692303?text=Hi!%20I%27d%20like%20to%20get%20a%20quote%20for%20the%20Signature%20%28Growth%20%26%20Authority%29%20website%20package.%20Here%27s%20a%20bit%20about%20my%20business%3A">Request Tailored Quote</a>
+      </article>
+
+      <article class="tcard glass tier-flag" style="transition-delay:240ms">
+        <span class="badge">FLAGSHIP</span>
+        <p class="sub">Tier 03 · Flagship Experience</p>
+        <h3 class="plat-text">Vanguard 3D</h3>
+        <p class="bestfor"><b>BEST FOR:</b> Brands wanting a flagship 3D experience or a custom full-stack platform.</p>
+        <span class="dlv">14–21 DAYS DELIVERY</span>
+        <ul class="feat">
+          <li>Up to 7 Pages, or a custom full-stack platform</li>
+          <li>Custom Interactive 3D Hero &amp; WebGL Elements</li>
+          <li>Bespoke Motion Dynamics</li>
+          <li>Sub-Second Speed Optimization</li>
+          <li>Full SEO &amp; Analytics Suite</li>
+          <li>Dashboards, portals &amp; API integrations (scoped to your project)</li>
+          <li>Free 1st-Year Domain &amp; Hosting</li>
+        </ul>
+        <a class="btn-plat px-6 py-4 text-[15px]" target="_blank" rel="noopener" href="https://wa.me/918146692303?text=Hi!%20I%27d%20like%20to%20get%20a%20quote%20for%20the%20Vanguard%203D%20%28Flagship%20Experience%29%20website%20package.%20Here%27s%20a%20bit%20about%20my%20business%3A">Request Tailored Quote</a>
+      </article>
+    </div>
+
+    <p class="mt-10 text-center font-mono text-[11px] tracking-[.18em] text-[#9CA3AF]">NOT SURE WHICH FITS? MESSAGE US ON WHATSAPP AND WE’LL SCOPE IT WITH YOU.</p>
+  </div>
+</section>
+<script>
+(function(){
+  var cards=document.querySelectorAll('#tiers .tcard');
+  if(!('IntersectionObserver' in window)){cards.forEach(function(c){c.classList.add('in')});return}
+  var io=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
+  cards.forEach(function(c){io.observe(c)});
+})();
+</script>
+<!-- FAQ (#faq) -->
+<section id="faq" class="sec" style="background:var(--slate);padding-top:6rem">
+  <div class="wrap grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:gap-20"><div class="lg:sticky lg:top-28 self-start">
+    <p class="eyebrow mb-5">06 / FAQ</p>
+    <h2 class="h2 plat-text">Straight answers.</h2>
+    <p class="mt-4 text-[#9CA3AF] max-w-[520px] leading-relaxed">The five questions we hear most before a project begins.</p>
+    </div>
+    <div id="faqList" class="grid">
+      <div class="faq glass rv"><button aria-expanded="false"><span>Do you build custom backends, dashboards and booking systems?</span><i class="plus"></i></button><div class="fa"><div><p>Yes. Beyond design, we build custom backends, admin dashboards, client portals and booking systems, plus WhatsApp and payment automations. These are scoped to your business and included in your tailored quote.</p></div></div></div>
+      <div class="faq glass rv"><button aria-expanded="false"><span>How do domain, hosting and Year-2 renewals work?</span><i class="plus"></i></button><div class="fa"><div><p>Your first-year domain and cloud hosting are included with every package. Both are set up for you to own, and before Year 2 we share the exact renewal costs in writing so there are no surprises. You can renew through us or manage it yourself.</p></div></div></div>
+      <div class="faq glass rv"><button aria-expanded="false"><span>What is your typical timeline and revision process?</span><i class="plus"></i></button><div class="fa"><div><p>Essential launches in 3 to 5 days, Signature in 7 to 10 and Vanguard 3D in 14 to 21. Custom full-stack platforms are timed to scope. You approve the design at each milestone and we refine it with you before anything goes live.</p></div></div></div>
+      <div class="faq glass rv"><button aria-expanded="false"><span>Will my 3D or custom website run fast on mobile devices?</span><i class="plus"></i></button><div class="fa"><div><p>Yes. Every build is mobile-first. 3D scenes use lighter geometry and capped pixel density on phones, pause when off-screen and fall back gracefully, and we test performance on real devices before launch.</p></div></div></div>
+      <div class="faq glass rv"><button aria-expanded="false"><span>Do I get 100% ownership of the source code?</span><i class="plus"></i></button><div class="fa"><div><p>Yes. At handover you receive the full source code, assets and access credentials for your domain and hosting. There is no lock-in and no proprietary platform holding your site hostage.</p></div></div></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="foot-glow" aria-hidden="true"></div>
+  <div class="wrap relative">
+    <div class="glass rv" style="border-radius:32px;padding:clamp(1.8rem,4vw,3rem)">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+        <div>
+          <p class="eyebrow mb-4">Start a project</p>
+          <h2 class="h2 plat-text" style="font-size:clamp(1.8rem,3.6vw,2.8rem)">Let’s build something<br>that lasts.</h2>
+        </div>
+        <a class="btn-plat px-8 py-4 text-[15px]" target="_blank" rel="noopener" href="https://wa.me/918146692303?text=Hi!%20I%27d%20like%20to%20discuss%20a%20project%20with%20Ironclad%20Web.%20Here%27s%20a%20bit%20about%20my%20business%3A">Book via WhatsApp</a>
+      </div>
+    </div>
+    <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 mt-16">
+      <div>
+        <a href="#hero" class="flex items-center gap-2.5 no-underline" aria-label="Ironclad Web home">
+          <span class="grid place-items-center h-8 w-8 rounded-lg" style="background:linear-gradient(145deg,#F4F4F6,#7b818c);box-shadow:inset 0 1px 0 #fff"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b0c10" stroke-width="2.6" stroke-linecap="square"><path d="M5 4h14M12 4v16M5 20h14"/></svg></span>
+          <span class="font-display font-extrabold text-lg tracking-[-0.03em] text-[#F4F4F6]">Ironclad<span class="text-[#9CA3AF] font-semibold"> Web</span></span>
+        </a>
+        <p class="mt-4 text-sm text-[#9CA3AF] leading-relaxed max-w-[260px]">Bespoke luxury websites and full-stack platforms, owned 100% by you.</p>
+      </div>
+      <div><p class="fh">Services</p><a class="flink" href="#services">Premium Web Design</a><a class="flink" href="#showcase">Immersive 3D Websites</a><a class="flink" href="#fullstack">Full-Stack Development</a></div>
+      <div><p class="fh">Navigation</p><a class="flink" href="#services">Services</a><a class="flink" href="#showcase">Showcase</a><a class="flink" href="#fullstack">Full-Stack</a><a class="flink" href="#process">Process</a><a class="flink" href="#packages">Packages</a><a class="flink" href="#faq">FAQ</a></div>
+      <div><p class="fh">Direct Contact</p><a class="flink" href="tel:+918146692303">+91 8146692303</a><a class="flink" target="_blank" rel="noopener" href="https://wa.me/918146692303?text=Hi%2C%20I%27d%20like%20to%20discuss%20building%20a%20luxury%20website">WhatsApp chat</a><span class="inline-block mt-3 font-mono text-[10px] tracking-[.18em] text-[#9CA3AF] border border-white/10 rounded-full px-3 py-1.5">DELHI NCR / INDIA STUDIO</span></div>
+    </div>
+    <div class="mt-14 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between gap-2 font-mono text-[10px] tracking-[.16em] text-[#6b7280]">
+      <span>&copy; <span id="yr">2026</span> IRONCLAD WEB. ALL RIGHTS RESERVED.</span>
+      <span>ENGINEERED IN DELHI NCR</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Mobile menu */
+(function(){
+  var b=document.getElementById('menuBtn'),m=document.getElementById('mobileMenu');
+  function set(o){m.classList.toggle('hidden',!o);m.classList.toggle('flex',o);b.setAttribute('aria-expanded',o)}
+  b.addEventListener('click',function(){set(m.classList.contains('hidden'))});
+  m.addEventListener('click',function(e){if(e.target.closest('a'))set(false)});
+})();
+
+/* 3D hero — native three.js */
+(function(){
+  var stage=document.getElementById('stage');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var renderer;
+  try{
+    renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+  }catch(e){document.documentElement.classList.add('no-webgl');return}
+
+  var isTouch=matchMedia('(pointer: coarse)').matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isTouch?1.5:2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1;
+  stage.appendChild(renderer.domElement);
+
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(38,1,.1,100);
+  camera.position.set(0,0,9);
+
+  /* Procedural studio environment: a black dome with soft elongated light panels, painted once to a canvas.
+     Soft falloff (not hard boxes) is what makes the chrome read as liquid. */
+  var envScene=new THREE.Scene();
+  (function(){
+    var c=document.createElement('canvas');c.width=1024;c.height=512;
+    var g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,1024,512);
+    function L(cx,cy,sx,sy,a){
+      g.save();g.translate(cx,cy);g.scale(sx,sy);
+      var r=g.createRadialGradient(0,0,0,0,0,1);
+      r.addColorStop(0,'rgba(255,255,255,'+a+')');r.addColorStop(.5,'rgba(255,255,255,'+a*.5+')');r.addColorStop(1,'rgba(255,255,255,0)');
+      g.fillStyle=r;g.fillRect(-1,-1,2,2);g.restore();
+    }
+    L(512,50,420,80,1);      // overhead softbox
+    L(100,256,40,220,1);     // left tall panel
+    L(614,250,28,200,.9);    // right tall panel
+    L(300,196,70,150,.5);    // broad soft front glow
+    L(205,236,8,215,1);      // front-left strip
+    L(338,226,6,205,.85);    // front-right strip
+    L(280,372,300,11,.9);    // low streak
+    L(768,230,34,170,.75);   // back rim
+    L(920,256,26,190,.85);   // back-left rim
+    var tex=new THREE.CanvasTexture(c);
+    var dome=new THREE.Mesh(new THREE.SphereGeometry(30,48,32),new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide}));
+    dome.material.color.setScalar(6);
+    envScene.add(dome);
+  })();
+  var pmrem=new THREE.PMREMGenerator(renderer);
+  scene.environment=pmrem.fromScene(envScene,0.02).texture;
+  pmrem.dispose();
+
+  /* Liquid-platinum sculpture: twisted torus knot */
+  /* Liquid platinum ring: one thick, inflated tube that closes on itself. Its path, thickness and cross-section
+     are all computed live in the vertex shader and drift slowly, so the metal appears to flow around the loop. */
+  var segs=isTouch?[200,56]:[340,96];
+  var geo=new THREE.PlaneGeometry(1,1,segs[0],segs[1]);
+  var shaderRef=null;
+  var mat=new THREE.MeshPhysicalMaterial({
+    color:0xc3c8d2,metalness:1,roughness:.03,
+    clearcoat:.6,clearcoatRoughness:.03,envMapIntensity:1.4
+  });
+  mat.onBeforeCompile=function(sh){
+    shaderRef=sh;
+    sh.uniforms.uTime={value:0};
+    sh.vertexShader=sh.vertexShader.replace('#include <common>',[
+      '#include <common>',
+      'uniform float uTime;',
+      'vec3 ctr(float a,float t){',
+      '  float rx=2.0+.2*sin(2.*a+.8+t*.12)+.1*sin(3.*a-t*.2);',
+      '  float ry=1.45+.18*sin(a+.3)+.1*sin(2.*a+t*.3+1.);',
+      '  float x=cos(a)*rx;',
+      '  float y=sin(a)*ry-.15*cos(a)*cos(a)+.14*cos(a);',
+      '  float z=.5*sin(a+.5+t*.25)+.2*sin(2.*a-t*.2);',
+      '  return vec3(x,y,z);',
+      '}',
+      'vec3 surf(float u,float v,float t){',
+      '  float a=u*6.28318530718,e=.002;',
+      '  vec3 c=ctr(a,t);',
+      '  vec3 T=normalize(ctr(a+e,t)-ctr(a-e,t));',
+      '  vec3 B=normalize(cross(T,vec3(0.,0.,1.)));',
+      '  vec3 N=cross(T,B);',
+      '  float r=.43+.11*sin(a-.3)-.04*cos(2.*a)+.05*sin(2.*a+t*.3)+.025*sin(3.*a-t*.22);',
+      '  float k=.86+.14*sin(2.*a+t*.28);',
+      '  float ph=v*6.28318530718,ps=.4*sin(a-t*.2);',
+      '  vec2 q=vec2(cos(ph)*r,sin(ph)*r*k);',
+      '  vec2 qr=vec2(q.x*cos(ps)-q.y*sin(ps),q.x*sin(ps)+q.y*cos(ps));',
+      '  return c+B*qr.x+N*qr.y;',
+      '}'
+    ].join('\n')).replace('#include <beginnormal_vertex>',[
+      'vec3 sp=surf(uv.x,uv.y,uTime);',
+      'vec3 spu=surf(uv.x+.0015,uv.y,uTime)-surf(uv.x-.0015,uv.y,uTime);',
+      'vec3 spv=surf(uv.x,uv.y+.002,uTime)-surf(uv.x,uv.y-.002,uTime);',
+      'vec3 objectNormal=normalize(cross(spu,spv));'
+    ].join('\n')).replace('#include <begin_vertex>','vec3 transformed=sp;');
+  };
+  var knot=new THREE.Mesh(geo,mat);
+  knot.frustumCulled=false;
+  knot.scale.setScalar(.64);
+  var rig=new THREE.Group();rig.add(knot);scene.add(rig);
+
+
+  var key=new THREE.DirectionalLight(0xffffff,.6);key.position.set(4,5,6);scene.add(key);
+
+  var mouse={x:0,y:0},cur={x:0,y:0},visible=true,t0=performance.now(),baseY=0;
+  function onMove(e){
+    var r=stage.getBoundingClientRect();
+    mouse.x=((e.clientX-r.left)/r.width)*2-1;
+    mouse.y=((e.clientY-r.top)/r.height)*2-1;
+  }
+  window.addEventListener('pointermove',onMove,{passive:true});
+
+  function resize(){
+    var w=stage.clientWidth,h=stage.clientHeight;
+    renderer.setSize(w,h,false);
+    camera.aspect=w/h;
+    var wide=w/h>1.05;
+    /* Desktop: sculpture sits right of copy. Mobile: centered in upper half. */
+    baseY=wide?0:(.5-.2)*6.198;
+    rig.position.set(wide?2.55:0,baseY,0);
+    var s=wide?1:Math.min(.36,w/1080);
+    rig.scale.setScalar(s);
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);resize();
+
+  new IntersectionObserver(function(en){visible=en[0].isIntersecting},{threshold:0}).observe(stage);
+
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(!visible||document.hidden)return;
+    var t=(now-t0)/1000;
+    cur.x+=(mouse.x-cur.x)*.06;
+    cur.y+=(mouse.y-cur.y)*.06;
+    var drift=reduce?0:t;
+    if(shaderRef)shaderRef.uniforms.uTime.value=drift*.6;
+    knot.rotation.y=Math.sin(drift*.12)*.28+cur.x*.45;
+    knot.rotation.x=Math.sin(drift*.25)*.12+cur.y*.4;
+    knot.rotation.z=drift*.06;
+    rig.position.y+=(baseY+(reduce?0:Math.sin(t*.7)*.08)-rig.position.y)*.05;
+    renderer.render(scene,camera);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.js"></script>
+<script>
+/* ---------- Frame 04: bento, tilt, live preview ---------- */
+(function(){
+  /* Concept previews: each is a fixed-size composition scaled to fit its card; the mode switch re-themes it */
+  function A(l,t,w,h,c,s,i){return '<div class="a '+c+'" style="left:'+l+'px;top:'+t+'px;width:'+w+'px;height:'+h+'px;'+(s||'')+'">'+i+'</div>'}
+  function wrap(w,h,inner){return '<div class="pvfit"><div class="pvp" data-w="'+w+'" data-h="'+h+'"><div class="pg">'+inner+'</div></div></div>'}
+
+  var hotelArt='<svg viewBox="0 0 232 256" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>'+
+    '<linearGradient id="hSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2a47"/><stop offset=".42" stop-color="#b3686f"/><stop offset=".72" stop-color="#f0b183"/><stop offset="1" stop-color="#f7d8a8"/></linearGradient>'+
+    '<radialGradient id="hSun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff2cf"/><stop offset="1" stop-color="#fff2cf" stop-opacity="0"/></radialGradient>'+
+    '<linearGradient id="hSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4768"/><stop offset="1" stop-color="#1c1d33"/></linearGradient>'+
+    '<linearGradient id="hWin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f9d49a"/><stop offset="1" stop-color="#d98a5c"/></linearGradient></defs>'+
+    '<rect width="232" height="256" fill="url(#hSky)"/><circle cx="160" cy="146" r="62" fill="url(#hSun)"/><circle cx="160" cy="146" r="13" fill="#fff0c9"/>'+
+    '<rect y="150" width="232" height="70" fill="url(#hSea)"/>'+
+    '<rect x="150" y="156" width="20" height="2" fill="#ffe8b8" opacity=".75"/><rect x="144" y="163" width="32" height="2" fill="#ffe8b8" opacity=".5"/><rect x="152" y="171" width="16" height="2" fill="#ffe8b8" opacity=".4"/>'+
+    '<rect x="0" y="86" width="128" height="124" fill="#e8d6c0"/><rect x="0" y="80" width="134" height="9" fill="#d3bda3"/>'+
+    '<path d="M14 210V152a15 15 0 0 1 30 0V210Z M52 210V152a15 15 0 0 1 30 0V210Z M90 210V152a15 15 0 0 1 30 0V210Z" fill="url(#hWin)"/>'+
+    '<path d="M0 126H128M0 132H128" stroke="#c9b194" stroke-width="1.4"/><rect x="18" y="100" width="22" height="16" rx="8" fill="#2a2236" opacity=".85"/><rect x="56" y="100" width="22" height="16" rx="8" fill="#2a2236" opacity=".85"/><rect x="94" y="100" width="22" height="16" rx="8" fill="#2a2236" opacity=".85"/>'+
+    '<rect y="208" width="232" height="48" fill="#cdb79b"/><rect x="16" y="222" width="124" height="22" rx="3" fill="#6f98a6"/><rect x="16" y="222" width="124" height="5" rx="2" fill="#a9c9d1" opacity=".7"/>'+
+    '<ellipse cx="196" cy="176" rx="7" ry="28" fill="#1f2a2a"/><ellipse cx="214" cy="186" rx="6" ry="22" fill="#243030"/></svg>';
+
+  function maison(){
+    return wrap(640,400,
+      A(0,0,640,46,'z1 pv-nav','','<b class="pv-br">MAISON AURELLE</b><span class="pv-lk"><i>Rooms</i><i class="on">Suites</i><i>Dining</i><i>Spa</i><i>Journal</i></span><span class="pv-bt">Reserve</span>')+
+      A(36,76,320,180,'z2','','<span class="pv-mo" style="color:var(--acc)">Amalfi Coast &middot; Since 1962</span><div class="pv-hd">A quiet kind<br>of luxury.</div><p class="pv-tx">Forty-two suites above the sea, a private spa and a kitchen led by the seasons.</p>')+
+      A(376,66,228,258,'z2 pv-img','',hotelArt+'<div class="pv-chip">Suite Marea<br>Sea view &middot; 2 guests</div>')+
+      A(36,270,432,62,'z3 pn pv-book','',
+        '<div class="pv-fd"><span class="pv-mo">Check-in</span><b>14 Dec</b></div><div class="pv-fd"><span class="pv-mo">Check-out</span><b>18 Dec</b></div><div class="pv-fd" style="border:0"><span class="pv-mo">Guests</span><b>2 Adults</b></div><span class="pv-bt">Check availability</span>')+
+      A(36,350,568,36,'z1 pv-strip','','<span class="pv-mo">&#9733; 4.9 &middot; 1,240 guest reviews</span><span class="pv-mo">Free cancellation</span><span class="pv-mo">Spa &amp; private dining</span>'));
+  }
+
+  function meridional(){
+    var nav=[['Overview',1],['Telemetry'],['Fleet'],['Alerts','3'],['Billing'],['Team']].map(function(n){return '<div class="pv-nv'+(n[1]===1?' on':'')+'"><u></u>'+n[0]+(n[1]&&n[1]!==1?'<b>'+n[1]+'</b>':'')+'</div>'}).join('');
+    var reg=[['Mumbai',72],['Frankfurt',54],['N. Virginia',81],['Singapore',38]].map(function(r){return '<div class="pv-row"><span>'+r[0]+'</span><div class="pv-bar"><i style="width:'+r[1]+'%"></i></div><span class="pv-mo">'+r[1]+'%</span></div>'}).join('');
+    var ev=[['Deploy v2.14.0 succeeded','2 min ago'],['Alert resolved: API latency','9 min ago'],['Role added: Billing admin','21 min ago'],['Nightly backup completed','1 hr ago']].map(function(e){return '<div class="pv-ev"><i></i><div>'+e[0]+'<span class="pv-mo">'+e[1]+'</span></div></div>'}).join('');
+    var chart='<svg viewBox="0 0 364 100" width="364" height="100" aria-hidden="true"><defs><linearGradient id="chA" x1="0" y1="0" x2="0" y2="1" class="ch-a"><stop offset="0" class="s1"/><stop offset="1" class="s2"/></linearGradient></defs>'+
+      '<path class="ch-g" d="M0 25H364M0 50H364M0 75H364"/><path d="M0 70C24 66 40 48 64 52S104 74 130 58S176 22 204 32S248 52 272 36S322 14 364 20L364 100L0 100Z" fill="url(#chA)"/>'+
+      '<path class="ch-l" d="M0 70C24 66 40 48 64 52S104 74 130 58S176 22 204 32S248 52 272 36S322 14 364 20"/><path class="ch-e" d="M0 92C60 90 120 94 180 90S300 93 364 91"/>'+
+      '<circle class="ch-dot" cx="364" cy="20" r="3"><animate attributeName="r" values="3;6;3" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.4;1" dur="2.4s" repeatCount="indefinite"/></circle></svg>';
+    return wrap(560,520,
+      A(0,0,132,520,'z1 pv-side','box-sizing:border-box','<div style="display:flex;align-items:center;gap:8px;margin:2px 4px 18px"><span style="width:16px;height:16px;border-radius:5px;background:var(--fg)"></span><b style="font:700 12px \'Plus Jakarta Sans\',sans-serif;letter-spacing:-.02em">Meridional</b></div><div class="pv-mo" style="margin:0 10px 6px">Workspace</div>'+nav+'<div class="pn" style="position:absolute;left:12px;right:12px;bottom:16px;padding:9px 10px;display:flex;gap:8px;align-items:center"><span style="width:22px;height:22px;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;font:700 9px Inter,sans-serif">AK</span><div style="line-height:1.25"><b style="font-size:10.5px">Ananya K.</b><div class="pv-mo" style="font-size:8px">Admin &middot; RBAC</div></div></div>')+
+      A(132,0,428,48,'z1 pv-top','box-sizing:border-box','<div><b style="font:700 14px \'Plus Jakarta Sans\',sans-serif;letter-spacing:-.02em">Overview</b><div class="pv-mo" style="margin-top:1px">Production &middot; all regions</div></div><div class="pv-sg"><i class="on">24h</i><i>7d</i><i>30d</i></div>')+
+      A(152,62,388,74,'z2 pn','display:grid;grid-template-columns:repeat(3,1fr)','<div class="pv-k"><span class="pv-mo">Requests / min</span><div class="pv-kv" data-live>48.2k</div><span class="pv-d">&#9650; 12.4%</span></div><div class="pv-k" style="border-left:1px solid var(--line)"><span class="pv-mo">p95 latency</span><div class="pv-kv">128 ms</div><span class="pv-d">&#9660; 8.1%</span></div><div class="pv-k" style="border-left:1px solid var(--line)"><span class="pv-mo">Error rate</span><div class="pv-kv">0.04%</div><span class="pv-d">&#9660; 0.01</span></div>')+
+      A(152,150,388,172,'z3 pn','box-sizing:border-box;padding:12px 12px 8px','<div style="display:flex;justify-content:space-between;margin-bottom:6px"><b style="font:700 11.5px \'Plus Jakarta Sans\',sans-serif">Throughput &middot; live</b><span class="pv-mo">&#9472; Requests &nbsp;&#9548; Errors</span></div>'+chart+'<div style="display:flex;justify-content:space-between;margin-top:4px"><span class="pv-mo">09:00</span><span class="pv-mo">12:00</span><span class="pv-mo">15:00</span><span class="pv-mo">18:00</span><span class="pv-mo">Now</span></div>')+
+      A(152,336,188,166,'z2 pn','box-sizing:border-box;padding:12px','<b style="font:700 11.5px \'Plus Jakarta Sans\',sans-serif">Regional load</b><div style="margin-top:6px">'+reg+'</div>')+
+      A(352,334,188,172,'z3 pn','box-sizing:border-box;padding:12px;overflow:hidden','<b style="font:700 11.5px \'Plus Jakarta Sans\',sans-serif">Activity</b><div style="margin-top:6px">'+ev+'</div>'));
+  }
+
+  var halcyonObj='<svg class="hs-fl" viewBox="0 0 260 260" width="260" height="260" aria-hidden="true"><defs>'+
+    '<radialGradient id="hSph" cx=".36" cy=".3" r=".8"><stop offset="0" style="stop-color:var(--o1)"/><stop offset=".5" style="stop-color:var(--o2)"/><stop offset="1" style="stop-color:var(--o3)"/></radialGradient>'+
+    '<linearGradient id="hRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--o1)"/><stop offset=".5" style="stop-color:var(--o2)"/><stop offset="1" style="stop-color:var(--o1)"/></linearGradient>'+
+    '<clipPath id="hFront"><rect x="0" y="130" width="260" height="130"/></clipPath></defs>'+
+    '<g class="hs-ring"><ellipse cx="130" cy="130" rx="118" ry="38" fill="none" stroke="url(#hRing)" stroke-width="4" transform="rotate(-24 130 130)" opacity=".55"/></g>'+
+    '<circle cx="130" cy="130" r="70" fill="url(#hSph)"/><ellipse cx="106" cy="98" rx="24" ry="10" fill="#fff" opacity=".16" transform="rotate(-30 106 98)"/>'+
+    '<g clip-path="url(#hFront)"><g class="hs-ring"><ellipse cx="130" cy="130" rx="118" ry="38" fill="none" stroke="url(#hRing)" stroke-width="4" transform="rotate(-24 130 130)"/></g></g></svg>';
+  var halcyonFloor='<svg viewBox="0 0 460 70" width="460" height="70" aria-hidden="true"><ellipse cx="230" cy="35" rx="214" ry="26" style="fill:none;stroke:var(--line)"/><ellipse cx="230" cy="35" rx="150" ry="18" style="fill:none;stroke:var(--line)"/><ellipse cx="230" cy="30" rx="86" ry="9" style="fill:var(--glow)"/></svg>';
+
+  function halcyon(){
+    var ix=[['01','Resonance',1],['02','Aether'],['03','Nocturne']].map(function(x){return '<div class="hs-ix'+(x[2]?' on':'')+'"><i></i>'+x[0]+' &nbsp;'+x[1]+'</div>'}).join('');
+    return wrap(760,420,
+      A(0,0,760,420,'zb hs-bg','','')+
+      A(0,66,760,140,'zb hs-w','','RESONANCE')+
+      A(150,298,460,70,'z1','',halcyonFloor)+
+      A(0,0,760,50,'z1 pv-nav','','<b class="pv-br">HALCYON</b><span class="pv-lk"><i>Collection</i><i class="on">Atelier</i><i>Story</i></span><span class="pv-mo">Cart (0)</span>')+
+      A(250,76,260,260,'z3','',halcyonObj)+
+      A(40,152,170,100,'z2','',ix)+
+      '<div class="a z2 hs-co" style="left:586px;top:130px;width:150px"><b>40 mm titanium driver</b><span>Machined, not moulded</span></div>'+
+      '<div class="a z2 hs-co" style="left:586px;top:236px;width:150px"><b>Spatial 360&deg; audio</b><span>Head-tracked, 32-bit</span></div>'+
+      A(40,358,680,36,'z2','display:flex;align-items:center;gap:20px','<span class="pv-bt">Explore in 3D &#8599;</span><span class="pv-mo">Scene 01 / 03</span><span class="hs-pg"></span><span class="pv-mo">60 FPS &middot; WebGL</span>'));
+  }
+
+  var cards=[
+    {tier:'CONCEPT 01 \u00b7 LUXURY HOSPITALITY',title:'Maison Aurelle',sub:'Luxury hospitality with an editorial layout and a two-tap reservation flow.',cls:'b1',tpl:maison},
+    {tier:'CONCEPT 02 \u00b7 FULL-STACK SAAS',title:'Meridional Cloud',sub:'A real-time telemetry dashboard with role-based portals and live data.',cls:'b2',tpl:meridional},
+    {tier:'CONCEPT 03 \u00b7 3D SPATIAL FLAGSHIP',title:'Halcyon Studio',sub:'An interactive WebGL brand stage running at 60fps.',cls:'b3',tpl:halcyon}
+  ];
+  var bento=document.getElementById('bento');
+  bento.innerHTML=cards.map(function(c,i){
+    return '<article class="tilt glass '+c.cls+'"><div class="flex items-start justify-between gap-4"><div><p class="tier">'+c.tier+'</p><h3 class="font-display font-bold text-xl md:text-2xl tracking-[-0.035em] mt-2">'+c.title+'</h3><p class="text-sm text-[#9CA3AF] mt-1">'+c.sub+'</p></div><span class="font-mono text-[10px] tracking-[.16em] text-[#9CA3AF] hidden sm:block">0'+(i+1)+'/03</span></div><div class="pvbox" role="img" aria-label="Concept preview: '+c.title+'">'+c.tpl()+'</div></article>';
+  }).join('');
+  function fit(box){
+    var p=box.querySelector('.pvp'),f=box.querySelector('.pvfit'),W=+p.dataset.w,H=+p.dataset.h,w=box.clientWidth,h=box.clientHeight,k=Math.min(w/W,h/H);
+    f.style.width=W+'px';f.style.height=H+'px';
+    f.style.transform='translate('+((w-W*k)/2)+'px,'+((h-H*k)/2)+'px) scale('+k+')';
+  }
+  bento.querySelectorAll('.pvbox').forEach(function(b){
+    fit(b);
+    if('ResizeObserver' in window)new ResizeObserver(function(){fit(b)}).observe(b);
+  });
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){bento.querySelectorAll('svg').forEach(function(s){if(s.pauseAnimations)s.pauseAnimations()})}
+  else setInterval(function(){
+    if(document.hidden)return;
+    var el=bento.querySelector('[data-live]');
+    if(el)el.textContent=(47.4+Math.random()*1.9).toFixed(1)+'k';
+  },1800);
+
+  /* 3D mouse tilt + specular sheen */
+  if(matchMedia('(hover:hover) and (pointer:fine)').matches&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    bento.querySelectorAll('.tilt').forEach(function(el){
+      el.addEventListener('pointermove',function(e){
+        var r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+        el.classList.add('active');
+        el.style.setProperty('--ry',((x-.5)*12).toFixed(2)+'deg');
+        el.style.setProperty('--rx',(-(y-.5)*12).toFixed(2)+'deg');
+        el.style.setProperty('--gx',(x*100).toFixed(1)+'%');
+        el.style.setProperty('--gy',(y*100).toFixed(1)+'%');
+        el.style.setProperty('--px',((x-.5)*2).toFixed(3));
+        el.style.setProperty('--py',((y-.5)*2).toFixed(3));
+      });
+      el.addEventListener('pointerleave',function(){
+        el.classList.remove('active');
+        ['--rx','--ry','--px','--py'].forEach(function(p){el.style.setProperty(p,'0')});
+      });
+    });
+  }
+
+  /* Live preview toggle */
+  var seg=document.getElementById('modeSeg'),pill=seg.querySelector('.pill'),btns=seg.querySelectorAll('button');
+  function place(){var b=seg.querySelector('[aria-pressed=true]');pill.style.width=b.offsetWidth+'px';pill.style.transform='translateX('+b.offsetLeft+'px)'}
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+    bento.dataset.mode=b.dataset.mode;place();
+  })});
+  place();window.addEventListener('resize',place);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(place);
+})();
+
+/* ---------- Process: editorial timeline, scroll-linked with Framer Motion ---------- */
+(function(){
+  var steps=[
+    ['01','Discovery & System Blueprint','We study your business, then map pages, user flows and system architecture before a single pixel is drawn. You approve a fixed scope up front.','DELIVERABLE · SITEMAP & FIXED SCOPE'],
+    ['02','Bespoke UI & 3D Prototyping','Zero templates. We design every screen and prototype the motion and 3D live in the browser, so you experience the result before it is built out.','DELIVERABLE · APPROVED DESIGN'],
+    ['03','Full-Stack & Performance Engineering','Frontend, backend, integrations and SEO are built together, then tuned on real mobile devices until every page is fast and stable.','DELIVERABLE · LIGHTHOUSE REPORT'],
+    ['04','Hardened Launch & Full Handover','Security checks, then domain and hosting go live. The source code, infrastructure and credentials move into your hands with no lock-in.','DELIVERABLE · CODE, DOMAIN & HOSTING']
+  ];
+  var root=document.getElementById('tl-root');
+  var M=window.Motion,R=window.React,RD=window.ReactDOM;
+  function staticStep(s){
+    return '<div class="step"><span class="dot"><span class="dotlit"></span></span><div class="num"><span class="o">'+s[0]+'</span><span class="f">'+s[0]+'</span></div><div class="sbody"><h3>'+s[1]+'</h3><p>'+s[2]+'</p><span class="tag">'+s[3]+'</span></div></div>';
+  }
+  if(!(M&&R&&RD&&M.useScroll&&M.useTransform&&RD.createRoot)){
+    root.innerHTML='<div class="tl"><div class="rail"><div class="fill" style="height:100%"></div></div>'+steps.map(staticStep).join('')+'</div>';
+    return;
+  }
+  var h=R.createElement,motion=M.motion,useScroll=M.useScroll,useTransform=M.useTransform;
+  function Step(props){
+    var s=props.s,i=props.i,p=props.p,c=(i+.5)/steps.length;
+    var lit=useTransform(p,[c-.16,c-.07],[0,1]);
+    var op=useTransform(p,[c-.22,c-.1],[.35,1]);
+    return h(motion.div,{className:'step',style:{opacity:op}},
+      h('span',{className:'dot'},h(motion.span,{className:'dotlit',style:{opacity:lit}})),
+      h('div',{className:'num'},h('span',{className:'o'},s[0]),h(motion.span,{className:'f',style:{opacity:lit}},s[0])),
+      h('div',{className:'sbody'},h('h3',null,s[1]),h('p',null,s[2]),h('span',{className:'tag'},s[3])));
+  }
+  function Timeline(){
+    var ref=R.useRef(null);
+    var sp=useScroll({target:ref,offset:['start 65%','end 60%']}).scrollYProgress;
+    var height=useTransform(sp,function(v){return (Math.min(Math.max(v,0),1)*100)+'%'});
+    return h('div',{className:'tl',ref:ref},
+      h('div',{className:'rail'},h(motion.div,{className:'fill',style:{height:height}})),
+      steps.map(function(s,i){return h(Step,{key:i,s:s,i:i,p:sp})}));
+  }
+  RD.createRoot(root).render(h(Timeline));
+})();
+
+</script>
+<script>
+/* Reveal-on-scroll, system diagram, FAQ accordion, year */
+(function(){
+  var rv=document.querySelectorAll('.rv');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    rv.forEach(function(el){io.observe(el)});
+  }else rv.forEach(function(el){el.classList.add('in')});
+
+  /* Architecture illustration: connected layers, packet flow, tap / auto-switching detail */
+  var arch=document.getElementById('arch');
+  if(arch){
+    var layers=[].slice.call(arch.querySelectorAll('.lyr')),box=document.getElementById('archD'),
+        flow=document.getElementById('archFlow'),svg=document.getElementById('archSvg'),
+        info=[
+          {t:'LAYER 01',h:'Frontend & Experience',p:'The experience your visitors see: bespoke UI, scroll choreography and real-time 3D, tuned to run smoothly on phones.',c:['Website interface','React / Three.js','User interactions']},
+          {t:'LAYER 02',h:'Backend & Logic',p:'The logic that powers booking flows, permissions, notifications and payment automations, with every request authenticated.',c:['APIs','Authentication','Booking & payment systems','Business automation']},
+          {t:'LAYER 03',h:'Data & Infrastructure',p:'Your data and infrastructure, hosted reliably, backed up and handed over to you with full access at launch.',c:['Database','Cloud hosting','Storage','Backups & monitoring']}
+        ],cur=0,auto=!matchMedia('(prefers-reduced-motion:reduce)').matches,vis=false,out='';
+    [[70,210],[210,350]].forEach(function(g){
+      [-50,0,50].forEach(function(dx,j){
+        var x=150+dx,off=Math.abs(dx)/2,y1=g[0]+50-off,y2=g[1]-50+off,up=j%2===1,
+            path=up?'M'+x+' '+y2+'V'+y1:'M'+x+' '+y1+'V'+y2,dur=(2.1+j*.35).toFixed(2);
+        out+='<path class="rod" d="M'+x+' '+y1+'V'+y2+'"/><circle class="port" cx="'+x+'" cy="'+y1+'" r="2.4"/><circle class="port" cx="'+x+'" cy="'+y2+'" r="2.4"/>'+
+          '<circle class="pk" r="2.2"><animateMotion dur="'+dur+'s" begin="-'+(j*.7).toFixed(1)+'s" repeatCount="indefinite" path="'+path+'"/><animate attributeName="opacity" values="0;1;1;0" dur="'+dur+'s" begin="-'+(j*.7).toFixed(1)+'s" repeatCount="indefinite"/></circle>';
+      });
+    });
+    flow.innerHTML=out;
+    if(!auto&&svg.pauseAnimations)svg.pauseAnimations();
+    function show(i){
+      cur=i;
+      layers.forEach(function(l,k){l.classList.toggle('on',k===i);l.setAttribute('aria-pressed',k===i)});
+      box.classList.add('sw');
+      setTimeout(function(){
+        var d=info[i];
+        document.getElementById('aT').textContent=d.t;
+        document.getElementById('aH').textContent=d.h;
+        document.getElementById('aP').textContent=d.p;
+        document.getElementById('aC').innerHTML=d.c.map(function(x){return '<span>'+x.replace(/&/g,'&amp;')+'</span>'}).join('');
+        box.classList.remove('sw');
+      },200);
+    }
+    layers.forEach(function(l,k){
+      l.addEventListener('click',function(){auto=false;show(k)});
+      l.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();auto=false;show(k)}});
+    });
+    if('IntersectionObserver' in window)new IntersectionObserver(function(en){vis=en[0].isIntersecting}).observe(arch);
+    setInterval(function(){if(auto&&vis)show((cur+1)%layers.length)},4400);
+    show(0);
+  }
+
+  var fq=document.querySelectorAll('#faqList .faq');
+  fq.forEach(function(f){
+    var b=f.querySelector('button');
+    b.addEventListener('click',function(){
+      var open=!f.classList.contains('open');
+      fq.forEach(function(o){o.classList.remove('open');o.querySelector('button').setAttribute('aria-expanded','false')});
+      if(open){f.classList.add('open');b.setAttribute('aria-expanded','true')}
+    });
+  });
+  var y=document.getElementById('yr');if(y)y.textContent=new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
